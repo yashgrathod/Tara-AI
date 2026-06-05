@@ -1,0 +1,142 @@
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #ffffff;
+  min-width: 0;
+}
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 48px;
+  border-bottom: 1px solid #e5e5e5;
+  flex-shrink: 0;
+  background: #ffffff;
+}
+.chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chat-header-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #000000;
+}
+.chat-header-sep {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #cccccc;
+}
+.chat-header-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 3px;
+  color: #888888;
+}
+.chat-header-right {
+  display: flex;
+  align-items: center;
+}
+.msg-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #aaaaaa;
+  padding: 3px 10px;
+  border: 1px solid #e5e5e5;
+}
+.message-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.message-viewport::-webkit-scrollbar {
+  width: 6px;
+}
+.message-viewport::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+.message-viewport::-webkit-scrollbar-thumb {
+  background: #cccccc;
+}
+.message-viewport::-webkit-scrollbar-thumb:hover {
+  background: #999999;
+}
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 48px 32px;
+  text-align: center;
+}
+.empty-logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 64px;
+  font-weight: 800;
+  color: #000000;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #000000;
+  margin-bottom: 28px;
+  letter-spacing: -2px;
+}
+.empty-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: #000000;
+  margin: 0 0 12px;
+}
+.empty-desc {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #888888;
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.6;
+}
+.empty-divider {
+  width: 40px;
+  height: 1px;
+  background: #e5e5e5;
+  margin: 28px 0;
+}
+.empty-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.empty-hint {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: #aaaaaa;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hint-key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: #000000;
+  border: 1px solid #e5e5e5;
+  padding: 2px 8px;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
