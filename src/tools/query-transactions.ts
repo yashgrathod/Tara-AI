@@ -19,30 +19,24 @@ All monetary values are rounded to 2 decimal places.`,
   inputSchema: z.object({
     startDate: z
       .string()
-      .optional()
-      .describe('ISO date string (YYYY-MM-DD) for the start of the date range (inclusive).'),
+      .default('')
+      .describe('ISO date string (YYYY-MM-DD) for the start of the date range (inclusive). Use "" if not filtering by date.'),
     endDate: z
       .string()
-      .optional()
-      .describe('ISO date string (YYYY-MM-DD) for the end of the date range (inclusive).'),
+      .default('')
+      .describe('ISO date string (YYYY-MM-DD) for the end of the date range (inclusive). Use "" if not filtering by date.'),
     merchant: z
       .string()
-      .optional()
-      .describe(
-        'Merchant name to search for. Will be fuzzy-matched against cleaned merchant names. E.g. "swiggy", "amazon", "netflix".',
-      ),
+      .default('')
+      .describe('Merchant name to filter by (fuzzy matched). Use "" if not filtering by merchant.'),
     category: z
       .string()
-      .optional()
-      .describe(
-        'Category to filter by, e.g. "food", "entertainment", "utilities", "transfer", "uncategorized".',
-      ),
+      .default('')
+      .describe('Category to filter by, e.g. "food", "entertainment". Use "" if not filtering by category.'),
     excludeTransfers: z
-      .boolean()
-      .default(true)
-      .describe(
-        'If true (default), exclude transactions with category "transfer". Set to false only if the user explicitly asks about transfers.',
-      ),
+      .string()
+      .default('true')
+      .describe('Set to "true" to exclude self-transfers, "false" to include them.'),
   }),
 
   outputSchema: z.object({
@@ -88,8 +82,9 @@ All monetary values are rounded to 2 decimal places.`,
       const cleanInput = merchant.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
       const firstWord = cleanInput.split(/\s+/)[0];
       if (firstWord) {
-        conditions.push(`clean_merchant LIKE $${paramIndex++}`);
-        params.push(`${firstWord}%`);
+        conditions.push(`(clean_merchant LIKE $${paramIndex} OR LOWER(merchant) LIKE $${paramIndex})`);
+        params.push(`%${firstWord}%`);
+        paramIndex++;
       }
     }
 
@@ -100,7 +95,7 @@ All monetary values are rounded to 2 decimal places.`,
     }
 
     // Exclude transfers unless explicitly requested
-    if (excludeTransfers) {
+    if (excludeTransfers !== 'false') {
       conditions.push(`LOWER(category) != 'transfer'`);
     }
 

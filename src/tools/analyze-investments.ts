@@ -1,6 +1,7 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { pool } from '../db/index.js';
+import { createJob } from '../jobs/job-store.js';
 
 export const analyzeInvestments = createTool({
   id: 'analyze-investments',
@@ -26,24 +27,24 @@ All monetary values and percentages are rounded to 2 decimal places.`,
   inputSchema: z.object({
     fund_name_query: z
       .string()
-      .optional()
-      .describe(
-        'Fund name to search for (fuzzy match). E.g. "bluechip", "liquid", "nifty". Leave empty for all funds.',
-      ),
+      .default('')
+      .describe('Fuzzy match for the mutual fund name (e.g. "bluechip", "nifty 50"). Use "" for all funds.'),
     startDate: z
       .string()
-      .optional()
-      .describe('ISO date (YYYY-MM-DD) for the start of the period return calculation.'),
+      .default('')
+      .describe('ISO date (YYYY-MM-DD) for the start of the period return calculation. Use "" if not applicable.'),
     endDate: z
       .string()
-      .optional()
-      .describe('ISO date (YYYY-MM-DD) for the end of the period return calculation.'),
+      .default('')
+      .describe('ISO date (YYYY-MM-DD) for the end of the period return calculation. Use "" if not applicable.'),
     analyze_portfolio: z
-      .boolean()
-      .default(false)
-      .describe(
-        'If true, calculate the user\'s actual holding realised returns. If false, calculate the fund\'s market period return between start and end dates.',
-      ),
+      .string()
+      .default('false')
+      .describe('Set to "true" to calculate user holding realized returns. Set to "false" for fund market period return.'),
+    async_mode: z
+      .string()
+      .default('false')
+      .describe('Set to "true" to queue as a background job. Only use with analyze_portfolio="true" for complex cross-portfolio analysis.'),
   }),
 
   outputSchema: z.object({
@@ -78,13 +79,40 @@ All monetary values and percentages are rounded to 2 decimal places.`,
         total_realised_return_pct: z.number(),
       })
       .optional(),
+    // Async job fields (populated when async_mode = true)
+    job_id: z.string().optional(),
+    job_status: z.string().optional(),
+    job_message: z.string().optional(),
   }),
 
   execute: async (inputData) => {
-    const { fund_name_query, startDate, endDate, analyze_portfolio } = inputData;
+    const { fund_name_query, startDate, endDate } = inputData;
+    // Parse string booleans (Llama 4 sends "true"/"false" as strings)
+    const analyze_portfolio = String(inputData.analyze_portfolio).toLowerCase() === 'true';
+    const async_mode = String(inputData.async_mode).toLowerCase() === 'true';
 
     // ------------------------------------------------------------------
-    // PATH A: HOLDING REALISED RETURN
+    // ASYNC PATH: Queue as background job and return immediately
+    // ------------------------------------------------------------------
+    if (async_mode && analyze_portfolio) {
+      const job = createJob({
+        fund_name_query,
+        startDate,
+        endDate,
+        analyze_portfolio: true,
+      });
+
+      return {
+        funds: [],
+        portfolio_summary: undefined,
+        job_id: job.id,
+        job_status: 'running',
+        job_message: `Portfolio analysis has been queued as background job ${job.id}. The user can check the result at GET /jobs/${job.id}.`,
+      };
+    }
+
+    // ------------------------------------------------------------------
+    // PATH A: HOLDING REALISED RETURN (synchronous)
     // ------------------------------------------------------------------
     if (analyze_portfolio) {
       let holdingsQuery = `
