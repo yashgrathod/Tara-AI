@@ -9,14 +9,14 @@ if (!DATA_DIR) {
   process.exit(1);
 }
 
-// Ensure the directory exists
+
 if (!fs.existsSync(DATA_DIR)) {
   console.error(`ERROR: Directory not found at ${DATA_DIR}`);
   process.exit(1);
 }
 
-// Dynamically clean merchant names without hardcoded arrays
-// Takes the first significant word (lowercased, alphanumeric)
+
+
 function cleanMerchant(merchant: string): string {
   const clean = merchant.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
   const firstWord = clean.split(/\s+/)[0];
@@ -28,7 +28,7 @@ async function ingest() {
   try {
     await client.query('BEGIN');
 
-    // Create Tables
+    
     await client.query(`
       CREATE TABLE IF NOT EXISTS transactions (
         id VARCHAR PRIMARY KEY,
@@ -66,10 +66,10 @@ async function ingest() {
       );
     `);
 
-    // Clean old data (idempotent)
+    
     await client.query('TRUNCATE TABLE transactions, holdings, fund_nav_history, funds CASCADE');
 
-    // Ingest Transactions
+    
     const txPath = path.join(DATA_DIR, 'transactions.json');
     if (fs.existsSync(txPath)) {
       const txData = JSON.parse(fs.readFileSync(txPath, 'utf8'));
@@ -97,7 +97,7 @@ async function ingest() {
       console.warn('transactions.json not found in DATA_DIR');
     }
 
-    // Ingest Funds and NAV History
+    
     const fundsPath = path.join(DATA_DIR, 'funds.json');
     if (fs.existsSync(fundsPath)) {
       const fundsData = JSON.parse(fs.readFileSync(fundsPath, 'utf8'));
@@ -108,14 +108,14 @@ async function ingest() {
           [fund.id, fund.name, fund.category]
         );
 
-        // Process monthly NAV points dynamically
+        
         let navPoints: any[] = [];
         if (Array.isArray(fund.history)) navPoints = fund.history;
         else if (Array.isArray(fund.nav)) navPoints = fund.nav;
         else if (Array.isArray(fund.nav_points)) navPoints = fund.nav_points;
         else if (Array.isArray(fund.monthly_nav)) navPoints = fund.monthly_nav;
         else {
-           // If it's a map of date strings to values, e.g., { "2023-01-01": 12.3 }
+           
            for (const [key, value] of Object.entries(fund)) {
                if (/^\\d{4}-\\d{2}-\\d{2}$/.test(key) && typeof value === 'number') {
                    navPoints.push({ date: key, nav: value });
@@ -140,7 +140,7 @@ async function ingest() {
       console.warn('funds.json not found in DATA_DIR');
     }
 
-    // Ingest Holdings
+    
     const holdingsPath = path.join(DATA_DIR, 'holdings.json');
     if (fs.existsSync(holdingsPath)) {
       const holdingsData = JSON.parse(fs.readFileSync(holdingsPath, 'utf8'));

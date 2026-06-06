@@ -11,17 +11,17 @@ app.use(express.json());
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-// ─────────────────────────────────────────────
-// GET /test — Testing console log
-// ─────────────────────────────────────────────
+
+
+
 app.get('/test', (req, res) => {
   console.log('TEST ROUTE HIT!');
   res.send('OK');
 });
 
-// ─────────────────────────────────────────────
-// POST /ask — Core agent endpoint
-// ─────────────────────────────────────────────
+
+
+
 app.post('/ask', async (req: Request, res: Response) => {
   const startTime = Date.now();
   const requestId = crypto.randomUUID();
@@ -50,12 +50,12 @@ app.post('/ask', async (req: Request, res: Response) => {
 
     logEntry.question = question;
 
-    // Retrieve the registered Tara agent from the Mastra instance
+    
     const agent = mastra.getAgent('taraAgent');
 
-    // Run the agent loop with retry logic for Groq tool_use_failed errors.
-    // Groq validates tool calls server-side — if the LLM omits a field,
-    // we retry since the output is non-deterministic and often succeeds.
+    
+    
+    
     const MAX_LLM_RETRIES = 3;
     let result: any;
     let lastError: any;
@@ -63,7 +63,7 @@ app.post('/ask', async (req: Request, res: Response) => {
     for (let attempt = 1; attempt <= MAX_LLM_RETRIES; attempt++) {
       try {
         result = await agent.generate(question);
-        break; // Success — exit retry loop
+        break; 
       } catch (retryErr: any) {
         lastError = retryErr;
         const msg = retryErr?.message || '';
@@ -80,7 +80,7 @@ app.post('/ask', async (req: Request, res: Response) => {
           await new Promise(r => setTimeout(r, 10000));
           continue;
         }
-        throw retryErr; // Non-retryable error or final attempt
+        throw retryErr; 
       }
     }
 
@@ -88,8 +88,8 @@ app.post('/ask', async (req: Request, res: Response) => {
       throw lastError || new Error('Agent failed after retries');
     }
 
-    // ── Extract observability data from the agent response ──
-    // The result.steps array contains each LLM turn + tool calls
+    
+    
     if (result.steps && Array.isArray(result.steps)) {
       for (const step of result.steps) {
         if (step.toolCalls && Array.isArray(step.toolCalls)) {
@@ -106,7 +106,7 @@ app.post('/ask', async (req: Request, res: Response) => {
               args: args,
             });
 
-            // Infer which DB tables were likely read
+            
             if (name === 'queryTransactions') {
               logEntry.db_tables_read.push('transactions');
             } else if (name === 'analyzeInvestments') {
@@ -121,7 +121,7 @@ app.post('/ask', async (req: Request, res: Response) => {
       }
     }
 
-    // De-duplicate db_tables_read
+    
     logEntry.db_tables_read = [...new Set(logEntry.db_tables_read)];
     logEntry.latency_ms = Date.now() - startTime;
 
@@ -142,12 +142,12 @@ app.post('/ask', async (req: Request, res: Response) => {
   }
 });
 
-// ─────────────────────────────────────────────
-// GET /health — Deployment readiness check
-// ─────────────────────────────────────────────
+
+
+
 app.get('/health', async (_req: Request, res: Response) => {
   try {
-    // Lazy import the pool only when health is checked
+    
     const { pool } = await import('./db/index.js');
 
     const counts = await pool.query(`
@@ -177,9 +177,9 @@ app.get('/health', async (_req: Request, res: Response) => {
   }
 });
 
-// ─────────────────────────────────────────────
-// GET /jobs/:id — Async job status polling
-// ─────────────────────────────────────────────
+
+
+
 app.get('/jobs/:id', (req: Request, res: Response) => {
   const jobId = req.params.id as string;
   const job = getJob(jobId);
@@ -189,7 +189,7 @@ app.get('/jobs/:id', (req: Request, res: Response) => {
     return;
   }
 
-  // Return the full job object — clients poll until status is 'completed' or 'failed'
+  
   res.json({
     job_id: job.id,
     status: job.status,
@@ -200,11 +200,11 @@ app.get('/jobs/:id', (req: Request, res: Response) => {
   });
 });
 
-// ─────────────────────────────────────────────
-// Start the server + background worker
-// ─────────────────────────────────────────────
+
+
+
 app.listen(PORT, () => {
-  // Start the async job background processor
+  
   startWorker();
 
   console.log(`\n🚀 Tara AI server running on http://localhost:${PORT}`);

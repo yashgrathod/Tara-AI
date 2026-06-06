@@ -1,13 +1,4 @@
-/**
- * Background Worker for asynchronous portfolio analysis (Step 6).
- *
- * Polls the in-memory job store every 2 seconds for pending jobs.
- * For each job it:
- *   1. Marks the job as 'running'
- *   2. Executes the heavy portfolio computation (same SQL logic as analyzeInvestments Path B)
- *   3. Stores the result back into the job store
- *   4. Triggers a new Tara agent generation turn with <async_tool_completion> tags
- */
+
 
 import { getPendingJobs, updateJob, type Job } from './job-store.js';
 import { pool } from '../db/index.js';
@@ -15,11 +6,11 @@ import { mastra } from '../mastra/index.js';
 
 const POLL_INTERVAL_MS = 2_000;
 let workerTimer: ReturnType<typeof setInterval> | null = null;
-let processing = false; // guard against overlapping polls
+let processing = false; 
 
-// ─────────────────────────────────────────────
-// Heavy computation — mirrors analyzeInvestments Path B
-// ─────────────────────────────────────────────
+
+
+
 async function executePortfolioAnalysis(input: Record<string, unknown>): Promise<Record<string, unknown>> {
   const fundNameQuery = input.fund_name_query as string | undefined;
 
@@ -112,9 +103,9 @@ async function executePortfolioAnalysis(input: Record<string, unknown>): Promise
   };
 }
 
-// ─────────────────────────────────────────────
-// Feed result back into a new Tara agent turn
-// ─────────────────────────────────────────────
+
+
+
 async function feedResultToAgent(job: Job): Promise<void> {
   try {
     const agent = mastra.getAgent('taraAgent');
@@ -129,20 +120,20 @@ Please summarize these portfolio results in a clear, user-friendly format with a
 
     const result = await agent.generate(syntheticPrompt);
 
-    // Log the agent's formatted response for observability
+    
     console.log(`[Worker] Agent formatted response for job ${job.id}:`);
     console.log(`  ${result.text?.slice(0, 200)}...`);
   } catch (err: any) {
     console.error(`[Worker] Failed to feed result to agent for job ${job.id}:`, err.message);
-    // Non-fatal: the result is already stored in the job and accessible via /jobs/:id
+    
   }
 }
 
-// ─────────────────────────────────────────────
-// Poll loop
-// ─────────────────────────────────────────────
+
+
+
 async function processPendingJobs(): Promise<void> {
-  if (processing) return; // skip if previous cycle is still running
+  if (processing) return; 
   processing = true;
 
   try {
@@ -152,7 +143,7 @@ async function processPendingJobs(): Promise<void> {
     for (const job of pending) {
       console.log(`[Worker] Processing job ${job.id} ...`);
 
-      // Mark as running
+      
       updateJob(job.id, { status: 'running' });
 
       try {
@@ -166,7 +157,7 @@ async function processPendingJobs(): Promise<void> {
 
         console.log(`[Worker] Job ${job.id} completed successfully.`);
 
-        // Trigger agent re-invocation with the result
+        
         await feedResultToAgent(job);
       } catch (err: any) {
         console.error(`[Worker] Job ${job.id} failed:`, err.message);
@@ -182,22 +173,18 @@ async function processPendingJobs(): Promise<void> {
   }
 }
 
-// ─────────────────────────────────────────────
-// Public API
-// ─────────────────────────────────────────────
 
-/**
- * Start the background worker. Idempotent — calling multiple times is safe.
- */
+
+
+
+
 export function startWorker(): void {
   if (workerTimer) return;
   console.log(`[Worker] Background job processor started (polling every ${POLL_INTERVAL_MS}ms)`);
   workerTimer = setInterval(processPendingJobs, POLL_INTERVAL_MS);
 }
 
-/**
- * Stop the background worker.
- */
+
 export function stopWorker(): void {
   if (workerTimer) {
     clearInterval(workerTimer);

@@ -1,16 +1,13 @@
-/**
- * Lightweight observability logger for the Tara AI server.
- * Sanitizes all output to ensure no secrets (API keys, connection strings) are leaked.
- */
 
-// Patterns that must never appear in logs
+
+
 const SENSITIVE_PATTERNS = [
-  /postgresql:\/\/[^\s]+/gi, // Postgres connection strings
+  /postgresql:\/\/[^\s]+/gi, 
   /postgres:\/\/[^\s]+/gi,
-  /AIza[0-9A-Za-z_-]{35}/g, // Google API keys
-  /sk-[a-zA-Z0-9]{20,}/g, // OpenAI-style keys (safety net)
-  /Bearer\s+[^\s]+/gi, // Auth headers
-  /password=[^\s&]+/gi, // Password params
+  /AIza[0-9A-Za-z_-]{35}/g, 
+  /sk-[a-zA-Z0-9]{20,}/g, 
+  /Bearer\s+[^\s]+/gi, 
+  /password=[^\s&]+/gi, 
 ];
 
 function sanitize(value: unknown): unknown {
@@ -27,7 +24,7 @@ function sanitize(value: unknown): unknown {
   if (value !== null && typeof value === 'object') {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      // Redact keys that commonly hold secrets
+      
       const lk = k.toLowerCase();
       if (
         lk.includes('key') ||

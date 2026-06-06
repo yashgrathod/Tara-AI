@@ -53,13 +53,13 @@ All monetary values and percentages are rounded to 2 decimal places.`,
         fund_id: z.string(),
         fund_name: z.string(),
         fund_category: z.string(),
-        // Period return fields (populated when analyze_portfolio is false)
+        
         start_nav: z.number().optional(),
         start_date: z.string().optional(),
         end_nav: z.number().optional(),
         end_date: z.string().optional(),
         period_return_pct: z.number().optional(),
-        // Holding return fields (populated when analyze_portfolio is true)
+        
         units: z.number().optional(),
         purchase_nav: z.number().optional(),
         purchase_date: z.string().optional(),
@@ -79,7 +79,7 @@ All monetary values and percentages are rounded to 2 decimal places.`,
         total_realised_return_pct: z.number(),
       })
       .optional(),
-    // Async job fields (populated when async_mode = true)
+    
     job_id: z.string().optional(),
     job_status: z.string().optional(),
     job_message: z.string().optional(),
@@ -87,13 +87,13 @@ All monetary values and percentages are rounded to 2 decimal places.`,
 
   execute: async (inputData) => {
     const { fund_name_query, startDate, endDate } = inputData;
-    // Parse string booleans (Llama 4 sends "true"/"false" as strings)
+    
     const analyze_portfolio = String(inputData.analyze_portfolio).toLowerCase() === 'true';
     const async_mode = String(inputData.async_mode).toLowerCase() === 'true';
 
-    // ------------------------------------------------------------------
-    // ASYNC PATH: Queue as background job and return immediately
-    // ------------------------------------------------------------------
+    
+    
+    
     if (async_mode && analyze_portfolio) {
       const job = createJob({
         fund_name_query,
@@ -111,9 +111,9 @@ All monetary values and percentages are rounded to 2 decimal places.`,
       };
     }
 
-    // ------------------------------------------------------------------
-    // PATH A: HOLDING REALISED RETURN (synchronous)
-    // ------------------------------------------------------------------
+    
+    
+    
     if (analyze_portfolio) {
       let holdingsQuery = `
         SELECT
@@ -148,7 +148,7 @@ All monetary values and percentages are rounded to 2 decimal places.`,
       let totalCurrentValue = 0;
 
       for (const holding of holdingsResult.rows) {
-        // Get the latest NAV for this fund
+        
         const latestNavResult = await pool.query(
           `SELECT nav, nav_date FROM fund_nav_history
            WHERE fund_id = $1
@@ -157,7 +157,7 @@ All monetary values and percentages are rounded to 2 decimal places.`,
         );
 
         if (latestNavResult.rows.length === 0) {
-          continue; // no NAV data, skip
+          continue; 
         }
 
         const latestNav = parseFloat(latestNavResult.rows[0].nav);
@@ -211,11 +211,11 @@ All monetary values and percentages are rounded to 2 decimal places.`,
       };
     }
 
-    // ------------------------------------------------------------------
-    // PATH B: FUND PERIOD RETURN
-    // ------------------------------------------------------------------
+    
+    
+    
 
-    // First, find matching funds
+    
     let fundsQuery = `SELECT id, name, category FROM funds`;
     const fundsParams: any[] = [];
 
@@ -234,7 +234,7 @@ All monetary values and percentages are rounded to 2 decimal places.`,
     const results: any[] = [];
 
     for (const fund of fundsResult.rows) {
-      // Get closest NAV to startDate (on or before)
+      
       let startNavResult;
       if (startDate) {
         startNavResult = await pool.query(
@@ -243,7 +243,7 @@ All monetary values and percentages are rounded to 2 decimal places.`,
            ORDER BY nav_date DESC LIMIT 1`,
           [fund.id, startDate],
         );
-        // If no NAV on or before, get the earliest available
+        
         if (startNavResult.rows.length === 0) {
           startNavResult = await pool.query(
             `SELECT nav, nav_date FROM fund_nav_history
@@ -253,7 +253,7 @@ All monetary values and percentages are rounded to 2 decimal places.`,
           );
         }
       } else {
-        // No start date given: use the earliest NAV
+        
         startNavResult = await pool.query(
           `SELECT nav, nav_date FROM fund_nav_history
            WHERE fund_id = $1
@@ -262,7 +262,7 @@ All monetary values and percentages are rounded to 2 decimal places.`,
         );
       }
 
-      // Get closest NAV to endDate (on or before)
+      
       let endNavResult;
       if (endDate) {
         endNavResult = await pool.query(
@@ -271,7 +271,7 @@ All monetary values and percentages are rounded to 2 decimal places.`,
            ORDER BY nav_date DESC LIMIT 1`,
           [fund.id, endDate],
         );
-        // If no NAV on or before, get the latest available
+        
         if (endNavResult.rows.length === 0) {
           endNavResult = await pool.query(
             `SELECT nav, nav_date FROM fund_nav_history
@@ -281,7 +281,7 @@ All monetary values and percentages are rounded to 2 decimal places.`,
           );
         }
       } else {
-        // No end date given: use the latest NAV
+        
         endNavResult = await pool.query(
           `SELECT nav, nav_date FROM fund_nav_history
            WHERE fund_id = $1
@@ -291,7 +291,7 @@ All monetary values and percentages are rounded to 2 decimal places.`,
       }
 
       if (startNavResult.rows.length === 0 || endNavResult.rows.length === 0) {
-        continue; // No NAV data for this fund
+        continue; 
       }
 
       const startNav = parseFloat(startNavResult.rows[0].nav);

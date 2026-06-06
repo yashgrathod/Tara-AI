@@ -1,15 +1,10 @@
-/**
- * In-memory Job Store for asynchronous tool execution (Step 6).
- *
- * Each job tracks a long-running portfolio analysis computation that has
- * been offloaded from the synchronous request path into a background worker.
- */
+
 
 import crypto from 'crypto';
 
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
+
+
+
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed';
 
 export interface Job {
@@ -17,22 +12,20 @@ export interface Job {
   status: JobStatus;
   created_at: string;
   completed_at: string | null;
-  /** The original tool input parameters that triggered this job. */
+  
   input: Record<string, unknown>;
-  /** The computed result (null until completed). */
+  
   result: Record<string, unknown> | null;
-  /** Error message if the job failed. */
+  
   error: string | null;
 }
 
-// ─────────────────────────────────────────────
-// Store
-// ─────────────────────────────────────────────
+
+
+
 const store = new Map<string, Job>();
 
-/**
- * Create a new job and return its ID.
- */
+
 export function createJob(input: Record<string, unknown>): Job {
   const job: Job = {
     id: crypto.randomUUID(),
@@ -47,16 +40,12 @@ export function createJob(input: Record<string, unknown>): Job {
   return job;
 }
 
-/**
- * Retrieve a job by ID. Returns undefined if not found.
- */
+
 export function getJob(id: string): Job | undefined {
   return store.get(id);
 }
 
-/**
- * Update mutable fields on an existing job.
- */
+
 export function updateJob(
   id: string,
   updates: Partial<Pick<Job, 'status' | 'completed_at' | 'result' | 'error'>>,
@@ -72,9 +61,7 @@ export function updateJob(
   return job;
 }
 
-/**
- * Return all jobs currently in 'pending' status (ready to be picked up).
- */
+
 export function getPendingJobs(): Job[] {
   const pending: Job[] = [];
   for (const job of store.values()) {
@@ -85,9 +72,7 @@ export function getPendingJobs(): Job[] {
   return pending;
 }
 
-/**
- * Total count of jobs in the store (useful for /health diagnostics).
- */
+
 export function getJobStats(): { total: number; pending: number; running: number; completed: number; failed: number } {
   let pending = 0, running = 0, completed = 0, failed = 0;
   for (const job of store.values()) {

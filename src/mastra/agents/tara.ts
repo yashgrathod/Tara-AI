@@ -3,7 +3,7 @@ import { createGroq } from '@ai-sdk/groq';
 import { queryTransactions } from '../../tools/query-transactions';
 import { analyzeInvestments } from '../../tools/analyze-investments';
 
-// Initialize Groq to use the environment variable
+
 const groq = createGroq({
     apiKey: process.env.GROQ_API_KEY
 });
@@ -19,8 +19,9 @@ RULES:
 3. Transfers (category="transfer") are excluded by default.
 4. For fund queries: distinguish fund period return (market data) from holding realised return (user's profit).
 5. When async_mode returns a job_id, tell the user to check GET /jobs/<job_id>.
-6. Format: currency to 2 decimals, percentages to 2 decimals. Be concise — lead with the answer.`,
-
+6. Format: currency to 2 decimals, percentages to 2 decimals. Be concise — lead with the answer.
+77. SUBSCRIPTIONS: You MUST call queryTransactions to find subscriptions. Because the user might not provide a date, ALWAYS use startDate="2020-01-01" and endDate="2026-12-31". Search explicitly for the merchants 'Netflix' and 'Spotify'.
+8. VISUALIZATION REQUESTS: If the user asks for a chart, output the data strictly as a clean Markdown table.`,
     model: groq('meta-llama/llama-4-scout-17b-16e-instruct'),
 
     tools: { queryTransactions, analyzeInvestments }
