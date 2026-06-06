@@ -1,8 +1,12 @@
 {
     "rewrites": [
         {
-            "source": "/ask",
+            "source": "/api/ask",
             "destination": "https://tara-ai-backend-3p88.onrender.com/ask"
+        },
+        {
+            "source": "/api/(.*)",
+            "destination": "https://tara-ai-backend-3p88.onrender.com/$1"
         },
         {
             "source": "/(.*)",
